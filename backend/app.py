@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+
 
 # Load model and label encoder
 with open('model.pkl', 'rb') as f:
