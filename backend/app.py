@@ -37,6 +37,7 @@ def engineer_features_single(features):
 
 # Flask app
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/predict", methods=["POST"])
 def predict():
