@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alzheimer's Clinical Decision Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .disclaimer {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 30px;
+            border-radius: 4px;
+        }
+        
+        .disclaimer strong {
+            color: #856404;
+        }
+        
+        .form-container {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .input-group input[type="number"] {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .radio-group {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .radio-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .radio-options {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .radio-options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        
+        .radio-options input[type="radio"] {
+            cursor: pointer;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .result-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .result-value {
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .risk-low { color: #28a745; }
+        .risk-medium { color: #ffc107; }
+        .risk-high { color: #dc3545; }
+        
+        .probabilities {
+            margin-top: 15px;
+        }
+        
+        .prob-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .error {
+            display: none;
+            padding: 15px;
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            border-radius: 4px;
+            margin-top: 20px;
+            color: #721c24;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Alzheimer's Clinical Decision Support System</h1>
+            <p>LightGBM-based diagnosis prediction using comprehensive biomarker panel</p>
+        </div>
+        
+        <div class="disclaimer">
+            <strong>⚠️ Medical Disclaimer:</strong> This tool is for clinical decision support only and should NOT replace professional medical judgment. All diagnostic decisions must be made by qualified healthcare professionals considering the complete clinical context.
+        </div>
+        
+        <div class="form-container">
+            <form id="diagnosisForm">
+                <!-- Biomarkers Section -->
+                <div class="section">
+                    <h2>Biomarkers</h2>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="Abeta40">Aβ40 (pg/mL)</label>
+                            <input type="number" id="Abeta40" name="Abeta40" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="Abeta42">Aβ42 (pg/mL)</label>
+                            <input type="number" id="Abeta42" name="Abeta42" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="pTau181">pTau181 (pg/mL)</label>
+                            <input type="number" id="pTau181" name="pTau181" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="pTau217">pTau217 (pg/mL)</label>
+                            <input type="number" id="pTau217" name="pTau217" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="GFAP">GFAP (pg/mL)</label>
+                            <input type="number" id="GFAP" name="GFAP" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="NfL">NfL (pg/mL)</label>
+                            <input type="number" id="NfL" name="NfL" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="Abeta_ratio">Aβ Ratio</label>
+                            <input type="number" id="Abeta_ratio" name="Abeta_ratio" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Clinical Markers Section -->
+                <div class="section">
+                    <h2>Clinical Markers</h2>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="MMSE">MMSE Score</label>
+                            <input type="number" id="MMSE" name="MMSE" min="0" max="30" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="DHA">DHA (μg/mL)</label>
+                            <input type="number" id="DHA" name="DHA" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="formic_acid">Formic Acid (μM)</label>
+                            <input type="number" id="formic_acid" name="formic_acid" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="lactoferrin">Lactoferrin (ng/mL)</label>
+                            <input type="number" id="lactoferrin" name="lactoferrin" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="NTP">NTP (μM)</label>
+                            <input type="number" id="NTP" name="NTP" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cognitive Assessment (DXMPTR) -->
+                <div class="section">
+                    <h2>Cognitive Assessment - DXMPTR</h2>
+                    
+                    <div class="radio-group">
+                        <label>DXMPTR1: Subjective memory complaint</label>
+                        <div class="radio-options">
+                            <label><input type="radio" name="DXMPTR1" value="1" required> Yes</label>
+                            <label><input type="radio" name="DXMPTR1" value="0.5"> Maybe</label>
+                            <label><input type="radio" name="DXMPTR1" value="0"> No</label>
+                        </div>
+                    </div>
+                    
+                    <div class="radio-group">
+                        <label>DXMPTR2: Informant memory complaint</label>
+                        <div class="radio-options">
+                            <label><input type="radio" name="DXMPTR2" value="1" required> Yes</label>
+                            <label><input type="radio" name="DXMPTR2" value="0.5"> Maybe</label>
+                            <label><input type="radio" name="DXMPTR2" value="0"> No</label>
+                        </div>
+                    </div>
+                    
+                    <div class="radio-group">
+                        <label>DXMPTR3: Change in general cognitive function</label>
+                        <div class="radio-options">
+                            <label><input type="radio" name="DXMPTR3" value="1" required> Yes</label>
+                            <label><input type="radio" name="DXMPTR3" value="0.5"> Maybe</label>
+                            <label><input type="radio" name="DXMPTR3" value="0"> No</label>
+                        </div>
+                    </div>
+                    
+                    <div class="radio-group">
+                        <label>DXMPTR4: Change in activities of daily living</label>
+                        <div class="radio-options">
+                            <label><input type="radio" name="DXMPTR4" value="1" required> Yes</label>
+                            <label><input type="radio" name="DXMPTR4" value="0.5"> Maybe</label>
+                            <label><input type="radio" name="DXMPTR4" value="0"> No</label>
+                        </div>
+                    </div>
+                    
+                    <div class="radio-group">
+                        <label>DXMPTR5: Objective memory impairment for age/education</label>
+                        <div class="radio-options">
+                            <label><input type="radio" name="DXMPTR5" value="1" required> Yes</label>
+                            <label><input type="radio" name="DXMPTR5" value="0.5"> Maybe</label>
+                            <label><input type="radio" name="DXMPTR5" value="0"> No</label>
+                        </div>
+                    </div>
+                    
+                    <div class="radio-group">
+                        <label>DXMPTR6: Not demented by clinical criteria</label>
+                        <div class="radio-options">
+                            <label><input type="radio" name="DXMPTR6" value="1" required> Yes</label>
+                            <label><input type="radio" name="DXMPTR6" value="0.5"> Maybe</label>
+                            <label><input type="radio" name="DXMPTR6" value="0"> No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <button type="submit" class="btn-submit" id="submitBtn">Run Diagnosis</button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px;">Analyzing patient data...</p>
+            </div>
+            
+            <div class="error" id="error"></div>
+            
+            <div class="results" id="results">
+                <h3>Diagnosis Results</h3>
+                
+                <div class="result-item">
+                    <span class="result-label">Predicted Diagnosis:</span>
+                    <span class="result-value" id="diagnosis"></span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Confidence:</span>
+                    <span class="result-value" id="probability"></span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Risk Level:</span>
+                    <span class="result-value" id="risk"></span>
+                </div>
+                
+                <div class="probabilities">
+                    <strong style="display: block; margin-bottom: 10px; color: #555;">All Class Probabilities:</strong>
+                    <div id="allProbabilities"></div>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 12px; background: #e7f3ff; border-radius: 6px; font-size: 13px; color: #004085;">
+                    <strong>Next retrain in:</strong> <span id="retrainCount"></span> predictions
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = '/predict';
+        
+        document.getElementById('diagnosisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Clear previous results
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('submitBtn').disabled = true;
+            
+            // Collect form data
+            const formData = new FormData(e.target);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = parseFloat(value);
+            }
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                // Display results
+                document.getElementById('diagnosis').textContent = result.diagnosis;
+                document.getElementById('probability').textContent = (result.probability * 100).toFixed(2) + '%';
+                
+                const riskElement = document.getElementById('risk');
+                riskElement.textContent = result.risk_level;
+                riskElement.className = 'result-value risk-' + result.risk_level.toLowerCase();
+                
+                // Display all probabilities
+                const probContainer = document.getElementById('allProbabilities');
+                probContainer.innerHTML = '';
+                
+                for (let [label, prob] of Object.entries(result.all_probabilities)) {
+                    const probItem = document.createElement('div');
+                    probItem.className = 'prob-item';
+                    probItem.innerHTML = `
+                        <span>${label}</span>
+                        <span style="font-weight: 600;">${(prob * 100).toFixed(2)}%</span>
+                    `;
+                    probContainer.appendChild(probItem);
+                }
+                
+                document.getElementById('retrainCount').textContent = result.predictions_until_retrain;
+                
+                document.getElementById('results').classList.add('show');
+                
+            } catch (error) {
+                const errorElement = document.getElementById('error');
+                errorElement.textContent = 'Error: ' + error.message + '. Make sure the backend is running on http://localhost:5000';
+                errorElement.classList.add('show');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
