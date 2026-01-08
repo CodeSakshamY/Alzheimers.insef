@@ -502,7 +502,7 @@
                 
             } catch (error) {
                 const errorElement = document.getElementById('error');
-                errorElement.textContent = 'Error: ' + error.message + '. Make sure the backend is running on http://localhost:5000';
+                errorElement.textContent = 'Error: ' + error.message + '. Make sure the backend is running on https://alzheimers-insef.onrender.com';
                 errorElement.classList.add('show');
             } finally {
                 document.getElementById('loading').classList.remove('show');
