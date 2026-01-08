@@ -1,4 +1,3 @@
-# api/predict_logic.py
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -12,15 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_class_weight
 from imblearn.over_sampling import SMOTE
 
-# Optional: pickle if you want to save model
-# import pickle
-
-# Global cache
-_model_cache = {
-    'model': None,
-    'label_encoder': None,
-    'feature_names': None
-}
+_model_cache = {'model': None, 'label_encoder': None, 'feature_names': None}
 
 RANDOM_SEED = 42
 FEATURE_COLUMNS = [
@@ -31,7 +22,7 @@ FEATURE_COLUMNS = [
 TARGET_COLUMN = 'Diagnosis'
 
 def load_and_train_model():
-    if _model_cache['model'] is not None:
+    if _model_cache['model']:
         return _model_cache['model'], _model_cache['label_encoder'], _model_cache['feature_names']
 
     dataset_path = os.path.join(os.path.dirname(__file__), '..', 'dataset.xlsx')
@@ -40,33 +31,28 @@ def load_and_train_model():
 
     df = pd.read_excel(dataset_path)
     available_features = [col for col in FEATURE_COLUMNS if col in df.columns]
-    df_filtered = df[available_features + [TARGET_COLUMN]].copy()
-    df_filtered = df_filtered.dropna()
+    df_filtered = df[available_features + [TARGET_COLUMN]].dropna()
 
     engineered_features = []
 
+    # Feature engineering
     if 'Abeta42' in available_features and 'Abeta40' in available_features:
         df_filtered['Abeta42_40_ratio'] = df_filtered['Abeta42'] / (df_filtered['Abeta40'] + 1e-10)
         engineered_features.append('Abeta42_40_ratio')
-
     if 'pTau217' in available_features and 'Abeta42' in available_features:
         df_filtered['pTau217_Abeta42_ratio'] = df_filtered['pTau217'] / (df_filtered['Abeta42'] + 1e-10)
         engineered_features.append('pTau217_Abeta42_ratio')
-
     if 'pTau181' in available_features and 'Abeta42' in available_features:
         df_filtered['pTau181_Abeta42_ratio'] = df_filtered['pTau181'] / (df_filtered['Abeta42'] + 1e-10)
         engineered_features.append('pTau181_Abeta42_ratio')
-
     if 'NfL' in available_features and 'GFAP' in available_features:
         df_filtered['NfL_GFAP_ratio'] = df_filtered['NfL'] / (df_filtered['GFAP'] + 1e-10)
         engineered_features.append('NfL_GFAP_ratio')
-
     if 'pTau217' in available_features and 'GFAP' in available_features and 'NfL' in available_features:
         df_filtered['biomarker_burden'] = df_filtered['pTau217'] + df_filtered['GFAP'] + df_filtered['NfL']
         if 'Abeta42' in available_features:
             df_filtered['biomarker_burden'] -= df_filtered['Abeta42'] * 0.01
         engineered_features.append('biomarker_burden')
-
     dxmptr_cols = [col for col in available_features if col.startswith('DXMPTR')]
     if len(dxmptr_cols) >= 2:
         df_filtered['DXMPTR_mean'] = df_filtered[dxmptr_cols].mean(axis=1)
@@ -129,21 +115,16 @@ def engineer_features_single(input_data, available_features):
 
     if 'Abeta42' in features and 'Abeta40' in features:
         features['Abeta42_40_ratio'] = features['Abeta42'] / (features['Abeta40'] + 1e-10)
-
     if 'pTau217' in features and 'Abeta42' in features:
         features['pTau217_Abeta42_ratio'] = features['pTau217'] / (features['Abeta42'] + 1e-10)
-
     if 'pTau181' in features and 'Abeta42' in features:
         features['pTau181_Abeta42_ratio'] = features['pTau181'] / (features['Abeta42'] + 1e-10)
-
     if 'NfL' in features and 'GFAP' in features:
         features['NfL_GFAP_ratio'] = features['NfL'] / (features['GFAP'] + 1e-10)
-
     if 'pTau217' in features and 'GFAP' in features and 'NfL' in features:
         features['biomarker_burden'] = features['pTau217'] + features['GFAP'] + features['NfL']
         if 'Abeta42' in features:
             features['biomarker_burden'] -= features['Abeta42'] * 0.01
-
     dxmptr_keys = [k for k in features.keys() if k.startswith('DXMPTR')]
     if len(dxmptr_keys) >= 2:
         dxmptr_values = [features[k] for k in dxmptr_keys]
@@ -151,32 +132,3 @@ def engineer_features_single(input_data, available_features):
         features['DXMPTR_std'] = np.std(dxmptr_values)
 
     return features
-
-
-def predict_single(input_data):
-    model, label_encoder, feature_names = load_and_train_model()
-    features_dict = engineer_features_single(input_data, FEATURE_COLUMNS)
-    X_input = np.array([[features_dict.get(feat, 0) for feat in feature_names]])
-
-    probabilities = model.predict_proba(X_input)[0]
-    predicted_class = int(np.argmax(probabilities))
-    predicted_label = label_encoder.inverse_transform([predicted_class])[0]
-    max_probability = float(probabilities[predicted_class])
-
-    if max_probability < 0.40:
-        risk_level = "Low"
-    elif max_probability <= 0.70:
-        risk_level = "Medium"
-    else:
-        risk_level = "High"
-
-    prob_dict = {label_encoder.inverse_transform([i])[0]: float(prob)
-                 for i, prob in enumerate(probabilities)}
-
-    return {
-        'diagnosis': predicted_label,
-        'probability': max_probability,
-        'risk_level': risk_level,
-        'all_probabilities': prob_dict
-    }
-
