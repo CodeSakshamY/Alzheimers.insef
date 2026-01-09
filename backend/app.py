@@ -75,10 +75,12 @@ def predict():
 
     biomarker_burden = pTau217 + GFAP + NfL
     biomarker_burden -= Abeta42 * 0.01
+    DXMDES = 1.0
+
 
     # ===== FINAL FEATURE VECTOR (26 FEATURES) =====
     X_input = np.array([[
-        *DXMPTR,
+        *DXMPTR,DXMDES,
         Abeta40, Abeta42, pTau181, pTau217,npTau217, GFAP, NfL,
         MMSE, DHA, formic_acid, lactoferrin, NTP, Abeta_ratio,
         Abeta42_40_ratio,
