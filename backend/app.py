@@ -42,6 +42,7 @@ CORS(app)
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()
+    print("REQUEST JSON:", request.json)
     features = engineer_features_single(data)
     
     # Ensure the feature order
@@ -51,7 +52,8 @@ def predict():
     pred_class = np.argmax(proba)
     pred_label = label_encoder.inverse_transform([pred_class])[0]
     max_prob = float(proba[pred_class])
-    
+    print("MODEL EXPECTS:", model.n_features_in_)
+
     # Risk level
     if max_prob < 0.4:
         risk = "Low"
